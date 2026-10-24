@@ -1,0 +1,120 @@
+{
+ "splits": {
+  "raw_train": 161297,
+  "raw_test": 53766,
+  "dedup_train": 112298,
+  "dedup_test": 48266,
+  "test_after_leakage_removal": 16144,
+  "train": 101068,
+  "val": 11230,
+  "test": 16144
+ },
+ "dup_groups": 48626,
+ "dup_groups_same_rating": 0.9985193106568503,
+ "dup_groups_same_condition": 0.9934191584748899,
+ "dup_groups_multi_drug": 0.9996503927939785,
+ "class_dist_train": [
+  0.2479,
+  0.089,
+  0.6631
+ ],
+ "class_dist_val": [
+  0.2479,
+  0.089,
+  0.6631
+ ],
+ "class_dist_test": [
+  0.2469,
+  0.0889,
+  0.6642
+ ],
+ "rating_counts_train": {
+  "1": 13612,
+  "2": 4325,
+  "3": 4019,
+  "4": 3096,
+  "5": 5010,
+  "6": 3983,
+  "7": 5952,
+  "8": 11916,
+  "9": 17229,
+  "10": 31926
+ },
+ "len_train": {
+  "mean": 94.89108323109194,
+  "median": 94.0,
+  "p95": 163.0,
+  "p99": 173.0,
+  "max": 1328,
+  "truncated_frac": 0.0019887600427434993
+ },
+ "len_by_class_median": [
+  88.0,
+  97.0,
+  96.0
+ ],
+ "vocab_size": 21331,
+ "oov_rate": {
+  "train": 0.003431518287365552,
+  "val": 0.0044218312015640825,
+  "test": 0.005016457675081299
+ },
+ "n_drugs": 3009,
+ "n_conditions": 847,
+ "top_conditions": {
+  "Birth Control": 16280,
+  "Depression": 5656,
+  "Pain": 4010,
+  "Anxiety": 3879,
+  "Acne": 3575,
+  "Bipolar Disorde": 2587,
+  "Insomnia": 2536,
+  "Weight Loss": 2399,
+  "Obesity": 2171,
+  "ADHD": 1968
+ },
+ "distinctive_words": {
+  "negative": [
+   "worse",
+   "worst",
+   "horrible",
+   "never",
+   "bleeding",
+   "not",
+   "terrible",
+   "stop",
+   "this",
+   "removed",
+   "awful",
+   "reaction"
+  ],
+  "neutral": [
+   "however",
+   "hoping",
+   "but",
+   "gained",
+   "i'm",
+   "?",
+   "tired",
+   "see",
+   "drive",
+   "gain",
+   "experiencing",
+   "sex"
+  ],
+  "positive": [
+   "years",
+   "works",
+   "love",
+   "life",
+   "best",
+   "great",
+   "amazing",
+   "has",
+   "miracle",
+   "only",
+   "far",
+   "helps"
+  ]
+ }
+}

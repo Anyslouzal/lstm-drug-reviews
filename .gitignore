@@ -1,0 +1,8 @@
+data/
+runs/**/best.pt
+runs/**/test_preds.npy
+__pycache__/
+*.pyc
+.DS_Store
+runs_progress*.log
+runs/final_l1.log

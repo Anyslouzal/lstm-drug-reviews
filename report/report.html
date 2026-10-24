@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Anys Louzal · Mohammed Yassine Ben Meziane · Salma Abarkane · Imad-Eddine El Khorassani · Faress Mohamed Anouar" />
+  <title>LSTM Variants for Sentiment Classification of Drug Reviews</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">LSTM Variants for Sentiment Classification of Drug
+Reviews</h1>
+<p class="subtitle">Lab Project on Recurrent Neural Networks — Advanced
+NLP 2026/2027</p>
+<p class="author">Anys Louzal · Mohammed Yassine Ben Meziane · Salma
+Abarkane · Imad-Eddine El Khorassani · Faress Mohamed Anouar</p>
+<p class="date">October 2026 — Code:
+https://github.com/Anyslouzal/lstm-drug-reviews</p>
+</header>
+<h1 id="goals-of-the-task">1. Goals of the task</h1>
+<p>Patients post free-text reviews of the drugs they take, together with
+a 1–10 satisfaction rating. We predict the <strong>sentiment</strong> of
+a review from its text alone, in three classes following the dataset
+authors [1]: <em>negative</em> (rating 1–4), <em>neutral</em> (5–6) and
+<em>positive</em> (7–10). This is useful for pharmacovigilance and to
+summarise patient experience at scale. Our objectives are (i) to build a
+<strong>vanilla LSTM</strong> [5] baseline, (ii) to implement and
+compare LSTM cells that are <strong>not</strong> vanilla — we
+implemented the three cells of the appendix: <strong>Working Memory
+Connections (WMC)</strong> [2], the <strong>Coupled Input-Forget Gate
+(CIFG)</strong> [3] and the <strong>LSTM with projection
+(LSTMP)</strong> [4] — and (iii) to study how training
+<strong>hyper-parameters</strong> (learning rate, optimizer,
+initialisation, batch size) affect them. All cells are written from
+scratch with <code>nn.Linear</code>; <code>nn.LSTM</code> is never used
+in the models.</p>
+<h1 id="exploratory-data-analysis">2. Exploratory data analysis</h1>
+<p><strong>Data and leakage.</strong> The UCI <em>Drug Review
+(Drugs.com)</em> dataset has 161,297 training and 53,766 test reviews
+(3,436 drugs, 884 conditions). Our first finding is a strong
+<strong>duplication problem</strong>: 48,968 training reviews (30 %) are
+exact copies of another one — 99.97 % of the duplicate groups list the
+<em>same text under several drug names</em> (brand and generic name of
+the same molecule), with the same rating in 99.9 % of cases. Worse,
+<strong>32,216 test reviews (60 %) also appear verbatim in the training
+set</strong>. Keeping them would reward memorisation and inflate test
+scores. We therefore keep a single copy of each review, drop test
+reviews seen in training, and carve a stratified 10 % validation split
+out of the training set: <strong>101,068 train / 11,230 validation /
+16,144 test</strong> reviews (Fig. 1a). The three splits share the same
+class proportions.</p>
+<div class="row">
+<figure>
+<img src="../figures/eda_dedup.png"/>
+<figcaption>
+Fig. 1a — De-duplication and leakage removal.
+</figcaption>
+</figure>
+<figure>
+<img src="../figures/eda_ratings.png"/>
+<figcaption>
+Fig. 1b — Ratings and sentiment classes.
+</figcaption>
+</figure>
+<figure>
+<img src="../figures/eda_lengths.png"/>
+<figcaption>
+Fig. 1c — Review length by class.
+</figcaption>
+</figure>
+</div>
+<p class="caption">
+Figure 1 — Exploratory analysis of the training set.
+</p>
+<p><strong>Class imbalance.</strong> Ratings are polarised (Fig. 1b):
+10/10 alone is 32 % of the reviews. After mapping, the classes are
+<strong>66.3 % positive, 24.8 % negative and only 8.9 %
+neutral</strong>. A majority-class predictor reaches 66 % accuracy but a
+macro-F1 of 0.27, so <strong>macro-F1 is our main metric</strong> and
+accuracy is reported as a secondary one.</p>
+<p><strong>Length and vocabulary.</strong> Reviews have 95 tokens on
+average (median 94, 99th percentile 173) with a peak around 150–160
+tokens, the length limit of the website (Fig. 1c). We truncate at 200
+tokens, which affects only 0.2 % of the reviews. Negative reviews are
+slightly shorter (median 88 vs 96–97). Text is HTML-unescaped,
+lower-cased and tokenised into words and punctuation; the vocabulary has
+21,331 entries (words seen at least 3 times in training, plus padding
+and unknown) (out-of-vocabulary rate: 0.5 % on test). A log-odds
+analysis [6] of the most class-specific words shows why the neutral
+class is hard: positive reviews use <em>works, love, life, great,
+amazing, miracle</em>, negative ones <em>worse, worst, horrible,
+terrible, stop, removed, reaction</em>, while neutral reviews are
+characterised by <strong>contrast and hedging</strong> (<em>however,
+but, hoping, gained, tired</em>) — they mix positive and negative
+statements, so the model must weigh the whole review rather than detect
+keywords. This is a natural test for the memory of an LSTM.</p>
+<h1 id="modelling-approach">3. Modelling approach</h1>
+<p><strong>Cells.</strong> Each cell computes the input part
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mrow><mi>x</mi><mo>⋅</mo></mrow></msub><msub><mi>x</mi><mi>t</mi></msub><mo>+</mo><msub><mi>b</mi><mo>⋅</mo></msub></mrow><annotation encoding="application/x-tex">W_{x\cdot}x_t+b_\cdot</annotation></semantics></math>
+of all gates for all time steps with one <code>nn.Linear</code> before
+the recurrent loop, then adds the recurrent part at each step (the gate
+matrices are stacked in one <code>nn.Linear</code>, which is the same
+parameterisation as the appendix equations). The non-vanilla cells
+differ as follows:</p>
+<ul>
+<li><strong>WMC</strong> lets the gates read the memory cell:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>i</mi><mi>t</mi></msub><mo>=</mo><mi>σ</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>W</mi><mrow><mi>x</mi><mi>i</mi></mrow></msub><msub><mi>x</mi><mi>t</mi></msub><mo>+</mo><msub><mi>W</mi><mrow><mi>h</mi><mi>i</mi></mrow></msub><msub><mi>h</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mrow><mi mathvariant="normal">tanh</mi><mo>&#8289;</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>W</mi><mrow><mi>c</mi><mi>i</mi></mrow></msub><msub><mi>c</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><msub><mi>b</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">i_t=\sigma(W_{xi}x_t+W_{hi}h_{t-1}+\tanh(W_{ci}c_{t-1})+b_i)</annotation></semantics></math>,
+same for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>f</mi><mi>t</mi></msub><annotation encoding="application/x-tex">f_t</annotation></semantics></math>,
+and the output gate sees the <em>updated</em> cell,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>o</mi><mi>t</mi></msub><mo>=</mo><mi>σ</mi><mo stretchy="false" form="prefix">(</mo><mi>…</mi><mo>+</mo><mrow><mi mathvariant="normal">tanh</mi><mo>&#8289;</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>W</mi><mrow><mi>c</mi><mi>o</mi></mrow></msub><msub><mi>c</mi><mi>t</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">o_t=\sigma(\dots+\tanh(W_{co}c_t))</annotation></semantics></math>
+— 3 extra
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>×</mo><mi>H</mi></mrow><annotation encoding="application/x-tex">H\times H</annotation></semantics></math>
+matrices.</li>
+<li><strong>CIFG</strong> couples the input and forget gates,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>i</mi><mi>t</mi></msub><mo>=</mo><mn>1</mn><mo>−</mo><msub><mi>f</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">i_t=1-f_t</annotation></semantics></math>:
+what is written is exactly what is forgotten; one gate (25 % of the
+recurrent weights) is removed.</li>
+<li><strong>LSTMP</strong> keeps
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math>
+memory cells but exposes and feeds back a smaller projection
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>h</mi><mi>t</mi></msub><mo>=</mo><msub><mi>W</mi><mi>p</mi></msub><mspace width="0.167em"></mspace><mo stretchy="false" form="prefix">(</mo><msub><mi>o</mi><mi>t</mi></msub><mo>⊙</mo><mrow><mi mathvariant="normal">tanh</mi><mo>&#8289;</mo></mrow><msub><mi>c</mi><mi>t</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><msub><mi>b</mi><mi>p</mi></msub></mrow><annotation encoding="application/x-tex">h_t=W_p\,(o_t\odot\tanh c_t)+b_p</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>h</mi><mi>t</mi></msub><mo>∈</mo><msup><mi>ℝ</mi><mi>P</mi></msup></mrow><annotation encoding="application/x-tex">h_t\in\mathbb{R}^P</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo>&lt;</mo><mi>H</mi></mrow><annotation encoding="application/x-tex">P&lt;H</annotation></semantics></math>:
+the recurrent matrices shrink from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mi>H</mi><mo>×</mo><mi>H</mi></mrow><annotation encoding="application/x-tex">4H\times H</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mi>H</mi><mo>×</mo><mi>P</mi></mrow><annotation encoding="application/x-tex">4H\times P</annotation></semantics></math>.</li>
+</ul>
+<p><strong>Verification.</strong> Unit tests check that, with the same
+weights, our vanilla cell and LSTMP reproduce PyTorch’s
+<code>nn.LSTMCell</code> and <code>nn.LSTM(proj_size=P)</code> to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>6</mn></mrow></msup><annotation encoding="application/x-tex">10^{-6}</annotation></semantics></math>
+(used only as an oracle), that WMC reduces to the vanilla cell when
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>c</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">W_c=0</annotation></semantics></math>,
+that CIFG keeps
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mi>t</mi></msub><mo>=</mo><msub><mi>c</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">c_t=c_{t-1}</annotation></semantics></math>
+when
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>f</mi><mi>t</mi></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">f_t=1</annotation></semantics></math>,
+and that padding does not change the outputs.</p>
+<p><strong>Classifier.</strong> Token ids → embedding (dimension 128,
+trained from scratch) → dropout 0.3 → one recurrent layer → hidden state
+after the <strong>last real token</strong> of the review (the state is
+frozen on padding, equivalent to packed sequences) → dropout → linear
+layer → softmax over the 3 classes. Using the final state (rather than
+pooling over time) makes the classifier rely on what the cell
+<em>remembers</em>, which is what we want to compare.</p>
+<p><strong>Training protocol (identical for every model).</strong> Same
+splits, same preprocessing and same evaluation. Cross-entropy with class
+weights proportional to 1/√(class frequency) (a compromise between the
+imbalance and accuracy), Adam (lr
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup><annotation encoding="application/x-tex">10^{-3}</annotation></semantics></math>),
+batch size 128 with length bucketing, gradient-norm clipping at 1, at
+most 10 epochs with early stopping (patience 3) on validation macro-F1;
+the best checkpoint is evaluated <strong>once</strong> on the test set.
+The architecture comparison is repeated with <strong>3 seeds</strong>
+(mean ± std). Training ran on an Apple M4 GPU (PyTorch MPS); experiments
+are logged as JSON per run and aggregated by a script (CSV tables and
+figures in the repository).</p>
+<h1 id="results">4. Results</h1>
+<h2 id="architecture-comparison-at-equal-width">4.1 Architecture
+comparison at equal width</h2>
+<p>Table 1 compares the four cells with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>=</mo><mn>256</mn></mrow><annotation encoding="application/x-tex">H=256</annotation></semantics></math>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo>=</mo><mn>128</mn></mrow><annotation encoding="application/x-tex">P=128</annotation></semantics></math>
+for LSTMP). The embedding (2.73 M parameters) dominates the total size,
+so we report the <strong>recurrent</strong> parameters separately: they
+are what differs between cells.</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;">Cell</th>
+<th style="text-align: right;">Recurrent params</th>
+<th style="text-align: right;">Total params</th>
+<th style="text-align: right;">Val. macro-F1</th>
+<th style="text-align: right;"><strong>Test macro-F1</strong></th>
+<th style="text-align: right;">Test acc.</th>
+<th style="text-align: center;">F1 neg / neu / pos</th>
+<th style="text-align: right;">Epochs to 62 %</th>
+<th style="text-align: right;">s / epoch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Vanilla</td>
+<td style="text-align: right;">394,240</td>
+<td style="text-align: right;">3,125,379</td>
+<td style="text-align: right;">64.56 ± 0.36</td>
+<td style="text-align: right;">63.99 ± 0.37</td>
+<td style="text-align: right;">78.9 ± 1.5</td>
+<td style="text-align: center;">75.1 / 28.6 / 88.2</td>
+<td style="text-align: right;">5.3</td>
+<td style="text-align: right;">113</td>
+</tr>
+<tr>
+<td style="text-align: left;">WMC</td>
+<td style="text-align: right;">590,848</td>
+<td style="text-align: right;">3,321,987</td>
+<td style="text-align: right;"><strong>65.60</strong> ± 0.50</td>
+<td style="text-align: right;">64.50 ± 0.25</td>
+<td style="text-align: right;">79.8 ± 0.5</td>
+<td style="text-align: center;">75.5 / 29.2 / 88.8</td>
+<td style="text-align: right;">3.7</td>
+<td style="text-align: right;">161</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFG</td>
+<td style="text-align: right;">295,680</td>
+<td style="text-align: right;">3,026,819</td>
+<td style="text-align: right;">65.59 ± 0.19</td>
+<td style="text-align: right;"><strong>64.51</strong> ± 0.21</td>
+<td style="text-align: right;">78.7 ± 0.7</td>
+<td style="text-align: center;">74.9 / <strong>30.5</strong> / 88.1</td>
+<td style="text-align: right;"><strong>3.3</strong></td>
+<td style="text-align: right;"><strong>102</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">LSTMP</td>
+<td style="text-align: right;">296,064</td>
+<td style="text-align: right;">3,026,819</td>
+<td style="text-align: right;">64.95 ± 0.11</td>
+<td style="text-align: right;">64.26 ± 0.27</td>
+<td style="text-align: right;">79.1 ± 1.5</td>
+<td style="text-align: center;">75.1 / 29.2 / 88.5</td>
+<td style="text-align: right;">4.0</td>
+<td style="text-align: right;">128</td>
+</tr>
+</tbody>
+</table>
+<p class="caption">
+Table 1 — Mean ± std over 3 seeds (%). “Epochs to 62 %”: first epoch
+with validation macro-F1 ≥ 62 %. Times measured with 3 runs sharing the
+GPU (relative values only).
+</p>
+<figure>
+<img src="../figures/learning_curves.png" style="width:82%"/>
+<figcaption>
+Figure 2 — Learning curves (mean of 3 seeds). Left: training (dotted)
+and validation (solid) loss. Right: validation macro-F1.
+</figcaption>
+</figure>
+<p><strong>All cells reach a similar level</strong> — test macro-F1
+between 64.0 and 64.5 % and accuracy 79–80 % — so the choice of cell is
+not decisive on this task. The ranking is nevertheless consistent:
+<strong>WMC and CIFG beat the vanilla baseline by +1.0 point on
+validation</strong> (Welch t-test,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">p=0.05</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.02</mn></mrow><annotation encoding="application/x-tex">p=0.02</annotation></semantics></math>)
+and <strong>+0.5 on test</strong>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>≈</mo><mn>0.13</mn></mrow><annotation encoding="application/x-tex">p\approx0.13</annotation></semantics></math>
+with only 3 seeds: a consistent trend, not a proof). LSTMP lies in
+between (+0.3 test). The clearest effect is on <strong>optimisation
+speed</strong> (Fig. 2): CIFG reaches 62 % validation macro-F1 after 3.3
+epochs and WMC after 3.7, against 5.3 for the vanilla cell. In CIFG the
+forget and input gates cannot both open, so each update of the memory is
+a convex combination
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mi>t</mi></msub><mo>=</mo><msub><mi>f</mi><mi>t</mi></msub><msub><mi>c</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>f</mi><mi>t</mi></msub><mo stretchy="false" form="postfix">)</mo><msub><mi>g</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">c_t=f_tc_{t-1}+(1-f_t)g_t</annotation></semantics></math>
+that keeps
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>c</mi><mi>t</mi></msub><annotation encoding="application/x-tex">c_t</annotation></semantics></math>
+bounded and well conditioned; in WMC the gates see the memory content
+directly and can react to it, which may also ease credit assignment.
+<strong>CIFG gives the best trade-off</strong>: the (tied) best test
+score and the best neutral-class F1, with 25 % fewer recurrent
+parameters than the vanilla cell, half those of WMC, and the fastest
+epochs. Training loss keeps decreasing while validation loss rises after
+epoch 5–7 for every cell (Fig. 2, left): the models start to over-fit,
+which early stopping handles.</p>
+<p>The <strong>neutral class remains the bottleneck</strong> (F1 ≈ 29–30
+% against 75 % negative and 88 % positive): neutral reviews mix praise
+and complaints (§2) and are 9 % of the data. The confusion matrix of the
+final model (§4.4) shows that neutral reviews are confused in both
+directions.</p>
+<h2 id="equal-parameter-budget-and-projection-size">4.2 Equal parameter
+budget and projection size</h2>
+<p>Since the cells differ in size, we also trained the vanilla cell with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>=</mo><mn>215</mn></mrow><annotation encoding="application/x-tex">H=215</annotation></semantics></math>
+and WMC with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>=</mo><mn>172</mn></mrow><annotation encoding="application/x-tex">H=172</annotation></semantics></math>,
+so that all four cells have ≈296k recurrent parameters — the size of
+CIFG-256 and LSTMP-256/128 (3 seeds each, Fig. 3a).</p>
+<figure>
+<img src="../figures/params_vs_f1.png" style="width:92%"/>
+<figcaption>
+Figure 3 — (a) Test macro-F1 of each configuration (mean ± std, 3
+seeds); the first four rows have the same recurrent budget. (b) LSTMP
+with H = 256 and a varying projection size P (seed 1).
+</figcaption>
+</figure>
+<p><strong>At equal budget the gap widens</strong>: vanilla 63.78 ±
+0.30, LSTMP 64.26 ± 0.27, CIFG 64.51 ± 0.21 and WMC 64.63 ± 0.20 test
+macro-F1. CIFG (+0.73,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.03</mn></mrow><annotation encoding="application/x-tex">p=0.03</annotation></semantics></math>)
+and WMC (+0.85,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.02</mn></mrow><annotation encoding="application/x-tex">p=0.02</annotation></semantics></math>)
+are now significantly better than the vanilla cell. Shrinking WMC from
+591k to 296k parameters does not hurt it (64.50 → 64.63), and enlarging
+the vanilla cell from 296k to 394k barely helps (63.78 → 63.99):
+<strong>the improvement comes from the structure of the cell, not from
+its capacity.</strong> For LSTMP (Fig. 3b, one seed), test macro-F1
+peaks at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo>=</mo><mn>128</mn><mo>=</mo><mi>H</mi><mi>/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">P=128=H/2</annotation></semantics></math>
+(64.2 %): a strong compression
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo>=</mo><mn>32</mn></mrow><annotation encoding="application/x-tex">P=32</annotation></semantics></math>,
+173k parameters) costs 1.6 points, while
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo>=</mo><mn>192</mn></mrow><annotation encoding="application/x-tex">P=192</annotation></semantics></math>
+or
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo>=</mo><mn>256</mn></mrow><annotation encoding="application/x-tex">P=256</annotation></semantics></math>
+(no compression, 460k parameters) bring nothing (63.5 %). A moderate
+projection acts as a useful bottleneck on the recurrent state.</p>
+<h2 id="hyper-parameters">4.3 Hyper-parameters</h2>
+<p>We varied one factor at a time around the base configuration of the
+vanilla model (Adam, lr
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup><annotation encoding="application/x-tex">10^{-3}</annotation></semantics></math>,
+batch 128, PyTorch default initialisation), seed 1 (Fig. 4).</p>
+<figure>
+<img src="../figures/hparams.png"/>
+<figcaption>
+Figure 4 — Hyper-parameter study on the vanilla LSTM (macro-F1,
+validation hollow / test filled). Bold tick = base configuration.
+</figcaption>
+</figure>
+<ul>
+<li><strong>Learning rate</strong> is the most sensitive factor.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>4</mn></mrow></msup><annotation encoding="application/x-tex">10^{-4}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>⋅</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>4</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3\cdot10^{-4}</annotation></semantics></math>
+are too slow to converge in 10 epochs (48.5 and 57.4 % test macro-F1),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>2</mn></mrow></msup><annotation encoding="application/x-tex">10^{-2}</annotation></semantics></math>
+is unstable (53.8 %), while
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup><annotation encoding="application/x-tex">10^{-3}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>⋅</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3\cdot10^{-3}</annotation></semantics></math>
+tie (63.6 %) — the latter reaches its best validation score at epoch 5
+instead of 9.</li>
+<li><strong>Optimizer.</strong> Adaptive methods win: Adam (63.6) ≈
+AdamW (63.5) &gt; RMSprop (62.2), whose validation score peaks early and
+then oscillates. SGD with Nesterov momentum is far behind: too slow at
+lr 0.1 (58.4) and unstable at lr 1 (46.8) despite gradient clipping.
+Per-parameter step sizes matter for LSTMs, whose gates receive gradients
+of very different scales.</li>
+<li><strong>Initialisation</strong> changes less than one point:
+Xavier-uniform 64.6, orthogonal recurrent blocks 63.6, default 63.6
+(test). Orthogonal recurrent weights learn faster in the first epochs
+(62.9 vs 60.2 % validation at epoch 4) but end at the same level. These
+gaps are close to the seed noise (std ≈ 0.4), so we only retain Xavier
+as the best option on validation.</li>
+<li><strong>Batch size.</strong> Smaller batches perform more updates
+per epoch: 32 and 64 gain ≈ 1 point (64.7 %) but are 3.3× and 1.9×
+slower per epoch; 256 is equivalent to 128, and 512 performs too few
+updates in 10 epochs (59.5 %).</li>
+</ul>
+<p><strong>Is the cell ranking an artefact of the learning
+rate?</strong> We re-trained WMC and CIFG with lr
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>⋅</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>4</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3\cdot10^{-4}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>⋅</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3\cdot10^{-3}</annotation></semantics></math>
+(seed 1). At
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>⋅</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>4</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3\cdot10^{-4}</annotation></semantics></math>
+both are 1.3 points above the vanilla cell (58.7–58.8 vs 57.4 % test),
+in line with their faster optimisation; at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>⋅</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3\cdot10^{-3}</annotation></semantics></math>
+all three end at the same level (63.4–63.8 %). Taking for each cell the
+learning rate that is best on validation
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>⋅</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3\cdot10^{-3}</annotation></semantics></math>
+for vanilla,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup><annotation encoding="application/x-tex">10^{-3}</annotation></semantics></math>
+for WMC and CIFG), the gated cells keep their advantage (64.5–64.8 vs
+63.6 % test): their benefit is largest when optimisation, rather than
+capacity, is the bottleneck.</p>
+<h2 id="final-model">4.4 Final model</h2>
+<p>We combined the conclusions of the study: the <strong>CIFG</strong>
+cell (best trade-off), Xavier initialisation (best on validation), Adam
+with lr
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>⋅</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>3</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2\cdot10^{-3}</annotation></semantics></math>
+(between the two best values), batch 128 (batch 64 was slightly better
+but twice as slow), and we read the review <strong>in both
+directions</strong> (the backward pass is run on each review reversed
+within its own length; the two final states are concatenated). Two
+candidates were trained for at most 12 epochs and <strong>chosen on
+validation only</strong>; the selected model was then evaluated once on
+the test set.</p>
+<div class="row">
+<div style="flex:1.25">
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;">Candidate (CIFG,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>=</mo><mn>256</mn></mrow><annotation encoding="application/x-tex">H=256</annotation></semantics></math>
+per direction)</th>
+<th style="text-align: right;">Recurrent params</th>
+<th style="text-align: right;">Val. macro-F1</th>
+<th style="text-align: right;">Test macro-F1</th>
+<th style="text-align: right;">Test acc.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Vanilla baseline (§4.1, mean of 3
+seeds)</td>
+<td style="text-align: right;">394k</td>
+<td style="text-align: right;">64.56</td>
+<td style="text-align: right;">63.99</td>
+<td style="text-align: right;">78.9</td>
+</tr>
+<tr>
+<td style="text-align: left;">Bidirectional, 1 layer</td>
+<td style="text-align: right;">591k</td>
+<td style="text-align: right;">65.64</td>
+<td style="text-align: right;">65.09</td>
+<td style="text-align: right;">79.7</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Bidirectional, 2 layers
+(selected)</strong></td>
+<td style="text-align: right;">1.77M</td>
+<td style="text-align: right;"><strong>66.65</strong></td>
+<td style="text-align: right;"><strong>65.63</strong></td>
+<td style="text-align: right;"><strong>80.3</strong></td>
+</tr>
+</tbody>
+</table>
+<p class="caption">
+Table 2 — Final candidates. The 2-layer model reaches its best
+validation score at epoch 4 (70 min of training).
+</p>
+</div>
+<figure style="flex:0.75">
+<img src="../figures/confusion_final.png"/>
+<figcaption>
+Figure 5 — Test confusion matrix of the final model.
+</figcaption>
+</figure>
+</div>
+<p>The final model reaches <strong>65.6 % test macro-F1 and 80.3 %
+accuracy</strong>, +1.6 points of macro-F1 over the vanilla baseline
+(per-class F1: negative 76.0, neutral 31.4, positive 89.4). Reading in
+both directions helps a last-state classifier, because the backward
+state summarises the <em>beginning</em> of the review, which the forward
+state may have partly forgotten after ~100 tokens; stacking a second
+layer adds another point on validation. Fig. 5 shows the remaining
+errors: 88 % of positive and 75 % of negative reviews are recognised,
+but only 36 % of neutral ones (26 % predicted negative, 38 % positive),
+and the class weights pull some clearly polar reviews towards
+<em>neutral</em> (precision of the neutral class: 28 %). A 6/10 review
+such as “really helps with mood swings […] it also made me gain 50 lbs”
+is genuinely ambiguous, and the boundary between 6 and 7 is
+subjective.</p>
+<h1 id="discussion-and-potential-improvements">5. Discussion and
+potential improvements</h1>
+<p><strong>Take-aways.</strong> (i) Cleaning the data mattered more than
+any architectural choice: 60 % of the official test set was leaked. (ii)
+On this task all LSTM cells perform within one point; the non-vanilla
+cells are consistently better, significantly so at equal parameter
+budget, and they <strong>learn faster</strong>. CIFG is our recommended
+cell: as accurate as WMC with half its parameters, the cheapest per step
+and the most stable across seeds. (iii) The learning rate and the
+optimizer dominate the other hyper-parameters; initialisation and batch
+size move results by about one point. (iv) The neutral class is the main
+source of error.</p>
+<p><strong>Limitations.</strong> Three seeds give confidence intervals
+of about ±0.4 point, of the same order as the differences we measure;
+the hyper-parameter study changes one factor at a time on the vanilla
+cell with one seed, so interactions (e.g. learning rate × cell) are not
+explored; timings were measured with several runs sharing one GPU.</p>
+<p><strong>Potential improvements.</strong></p>
+<ul>
+<li><strong>Better input representations</strong>: pre-trained word
+vectors (fastText, or biomedical BioWordVec) and sub-word tokenisation
+would help with drug names, dosages and misspellings, which are frequent
+in patient reviews.</li>
+<li><strong>Better use of the hidden states</strong>: attention pooling
+over all time steps instead of the last state, which should help long
+reviews whose sentiment is stated early.</li>
+<li><strong>Targeting the neutral class</strong>: exploit the order of
+the labels (regress the 1–10 rating, or an ordinal loss), focal loss, or
+tune decision thresholds on the validation set to trade a little
+accuracy for macro-F1.</li>
+<li><strong>Side information</strong>: the condition and the drug name
+are available for every review and could be embedded.</li>
+<li><strong>Training</strong>: recurrent (variational) dropout and a
+learning-rate schedule (warm-up + cosine), since every model over-fits
+after 5–7 epochs; batch 64 gained one point at twice the cost.</li>
+<li><strong>Stronger baselines</strong>: a fine-tuned Transformer
+(DistilBERT/BioBERT) as an upper bound, and a joint multi-seed search
+(e.g. Bayesian optimisation) over learning rate, batch size and
+cell.</li>
+</ul>
+<section id="references" class="refs">
+<h1>References</h1>
+<p>[1] F. Gräßer, S. Kallumadi, H. Malberg, S. Zaunseder. Aspect-based
+sentiment analysis of drug reviews applying cross-domain and cross-data
+learning. <em>Proc. Int. Conf. on Digital Health</em>, 2018.</p>
+<p>[2] F. Landi, L. Baraldi, M. Cornia, R. Cucchiara. Working Memory
+Connections for LSTM. <em>Neural Networks</em> 144, 2021.</p>
+<p>[3] K. Greff, R. K. Srivastava, J. Koutník, B. R. Steunebrink, J.
+Schmidhuber. LSTM: A Search Space Odyssey. <em>IEEE Trans. Neural
+Networks and Learning Systems</em> 28(10), 2017.</p>
+<p>[4] H. Sak, A. Senior, F. Beaufays. Long Short-Term Memory Recurrent
+Neural Network Architectures for Large Scale Acoustic Modeling.
+<em>Interspeech</em>, 2014.</p>
+<p>[5] S. Hochreiter, J. Schmidhuber. Long Short-Term Memory. <em>Neural
+Computation</em> 9(8), 1997.</p>
+<p>[6] B. L. Monroe, M. P. Colaresi, K. M. Quinn. Fightin’ Words:
+Lexical Feature Selection and Evaluation for Identifying the Content of
+Political Conflict. <em>Political Analysis</em> 16(4), 2008.</p>
+</section>
+</body>
+</html>

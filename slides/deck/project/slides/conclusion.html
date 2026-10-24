@@ -1,0 +1,24 @@
+<section id="conclusion" data-transition="fade" style="background:#14213D;color:#FCFCFB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#FF9A6B">Conclusion</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1;color:#FCFCFB">What we learned, and what we would try next</h2>
+</div>
+<div style="display:flex;gap:80px;flex:1">
+<div style="flex:1.1;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;gap:24px;align-items:start"><p style="font-family:'Source Serif 4', Georgia, serif;font-size:48px;font-weight:600;line-height:1;color:#FF9A6B">1</p><p style="font-size:30px;line-height:1.4;color:#E3E8F0"><b style="color:#FCFCFB">Clean the data first:</b> 60 % of the official test set was already in training</p></div>
+<div style="display:flex;gap:24px;align-items:start"><p style="font-family:'Source Serif 4', Georgia, serif;font-size:48px;font-weight:600;line-height:1;color:#FF9A6B">2</p><p style="font-size:30px;line-height:1.4;color:#E3E8F0"><b style="color:#FCFCFB">Gated variants win by a small, real margin</b> and learn faster; CIFG is the best trade-off</p></div>
+<div style="display:flex;gap:24px;align-items:start"><p style="font-family:'Source Serif 4', Georgia, serif;font-size:48px;font-weight:600;line-height:1;color:#FF9A6B">3</p><p style="font-size:30px;line-height:1.4;color:#E3E8F0"><b style="color:#FCFCFB">Learning rate and optimizer</b> matter more than the choice of cell</p></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#1F2E50;border-radius:16px;padding:40px 44px">
+<h3 style="font-size:36px;font-weight:600;color:#FCFCFB">Next steps</h3>
+<ul style="font-size:28px;line-height:1.4;color:#E3E8F0">
+<li>Biomedical word vectors and sub-word tokens for drug names</li>
+<li>Attention pooling instead of the last hidden state</li>
+<li>Ordinal loss on the 1–10 rating to rescue the neutral class</li>
+<li>A fine-tuned BioBERT as an upper bound</li>
+</ul>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9FB0C8">Code, results and report: github.com/Anyslouzal/lstm-drug-reviews · Thank you — questions? · 11</p>
+<aside>Three messages to remember. First, data quality comes before modelling: without de-duplication, 60 % of the test set would have been memorised. Second, the non-vanilla cells are better by a small but real margin, significant at equal parameter budget, and they learn faster; CIFG gives the best trade-off between accuracy, size and speed. Third, the learning rate and the optimizer matter more than the cell itself. Next, we would try biomedical word vectors and sub-word tokens, attention pooling over all hidden states, an ordinal loss on the original rating to help the neutral class, and a fine-tuned BioBERT as an upper bound. Thank you, we are happy to take questions.</aside>
+</section>

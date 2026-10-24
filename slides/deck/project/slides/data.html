@@ -1,0 +1,25 @@
+<section id="data" data-transition="fade" style="background:#FCFCFB;color:#3D4A5C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#C2410C">Exploratory analysis · data quality</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1;color:#14213D">60 % of the test reviews also appear in training</h2>
+</div>
+<div style="display:flex;gap:64px;align-items:center;flex:1">
+<div style="flex:1;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:88px;font-weight:600;line-height:1;color:#C2410C">30 %</p>
+<p style="font-size:28px;line-height:1.35">of the 161k training reviews are exact duplicates</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:88px;font-weight:600;line-height:1;color:#C2410C">99.97 %</p>
+<p style="font-size:28px;line-height:1.35">of duplicate groups list one text under several drug names (brand + generic)</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:88px;font-weight:600;line-height:1;color:#14213D">101k · 11k · 16k</p>
+<p style="font-size:28px;line-height:1.35">train · validation · test after de-duplication</p>
+</div>
+</div>
+<img src="/_blob/f2d773d57e755fc837b28c70fc050928" alt="Bar chart: 161,297 training reviews reduced to 112,298 after de-duplication; 53,766 test reviews reduced to 16,144 after removing duplicates and reviews seen in training" style="width:940px;height:540px;object-fit:contain">
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7689">Without cleaning, test scores would reward memorisation · 03</p>
+<aside>Our first finding came from the exploratory analysis. Thirty percent of the training reviews are exact copies: the same review is listed under the brand name and the generic name of the same drug, with the same rating in 99.9 % of cases. Worse, 60 % of the official test reviews appear word for word in the training set. A model could score well by memorising. So we keep one copy of each review and remove from the test set everything seen in training. We end with about 101k training, 11k validation and 16k test reviews, with the same class proportions in all three.</aside>
+</section>

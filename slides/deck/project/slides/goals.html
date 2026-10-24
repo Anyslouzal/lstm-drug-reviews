@@ -1,0 +1,38 @@
+<section id="goals" data-transition="fade" style="background:#FCFCFB;color:#3D4A5C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#C2410C">Goal of the task</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1;color:#14213D">Read a patient’s review, predict its sentiment</h2>
+</div>
+<div style="display:flex;gap:64px;flex:1">
+<div style="flex:1.25;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;gap:24px;align-items:start;background:#EEF1F5;border-radius:16px;padding:28px 32px">
+<p style="font-size:24px;font-weight:600;color:#FCFCFB;background:#1F5FAE;border-radius:24px;padding:6px 18px;white-space:nowrap">positive · 10/10</p>
+<p style="font-size:30px;line-height:1.35;color:#14213D;font-style:italic">“Added this med and pain is finally under control. Thank you so much.”</p>
+</div>
+<div style="display:flex;gap:24px;align-items:start;background:#EEF1F5;border-radius:16px;padding:28px 32px">
+<p style="font-size:24px;font-weight:600;color:#FCFCFB;background:#5F5E59;border-radius:24px;padding:6px 18px;white-space:nowrap">neutral · 6/10</p>
+<p style="font-size:30px;line-height:1.35;color:#14213D;font-style:italic">“Really helps with mood swings and made me calmer. It also made me gain 50lbs in 6 months.”</p>
+</div>
+<div style="display:flex;gap:24px;align-items:start;background:#EEF1F5;border-radius:16px;padding:28px 32px">
+<p style="font-size:24px;font-weight:600;color:#FCFCFB;background:#B4342A;border-radius:24px;padding:6px 18px;white-space:nowrap">negative · 1/10</p>
+<p style="font-size:30px;line-height:1.35;color:#14213D;font-style:italic">“Tried it a few times but it gave me horrible, disturbing nightmares each time.”</p>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;gap:24px;align-items:start">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;line-height:1;color:#C2410C">1</p>
+<p style="font-size:30px;line-height:1.35"><b style="color:#14213D">Baseline:</b> a vanilla LSTM written with nn.Linear only</p>
+</div>
+<div style="display:flex;gap:24px;align-items:start">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;line-height:1;color:#C2410C">2</p>
+<p style="font-size:30px;line-height:1.35"><b style="color:#14213D">Three non-vanilla cells:</b> WMC, CIFG and LSTMP (one more than required)</p>
+</div>
+<div style="display:flex;gap:24px;align-items:start">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;line-height:1;color:#C2410C">3</p>
+<p style="font-size:30px;line-height:1.35"><b style="color:#14213D">Hyper-parameters:</b> learning rate, optimizer, initialisation, batch size</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7689">Ratings 1–4 → negative · 5–6 → neutral · 7–10 → positive (Gräßer et al., 2018) · 02</p>
+<aside>The dataset is the UCI Drugs.com review dataset: free-text patient reviews with a 1 to 10 rating. Following the dataset authors, we turn the rating into three sentiment classes. Look at the neutral example: it says something good and something bad. That is what makes the task interesting for a recurrent model, which has to weigh the whole review. Our three goals: a vanilla baseline, three other LSTM cells from the appendix, and a hyper-parameter study.</aside>
+</section>

@@ -1,0 +1,19 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-10-23T18:45:00Z"},
+  "lists": "css",
+  "title": "LSTM Variants — Drug Review Sentiment",
+  "order": ["cover", "goals", "data", "eda", "cells", "protocol", "results", "budget", "hparams", "final", "conclusion"],
+  "sections": {
+    "s1": {"description": "Task, goals and the data, including the leakage we found", "start": "cover"},
+    "s2": {"description": "The four LSTM cells and the shared training protocol", "start": "cells"},
+    "s3": {"description": "Architecture comparison, parameter budget and hyper-parameters", "start": "results"},
+    "s4": {"description": "Final model, conclusions and improvements", "start": "final"}
+  },
+  "faces": {
+    "source-serif-4": {"family": "Source Serif 4", "href": "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&display=swap"},
+    "ibm-plex-sans": {"family": "IBM Plex Sans", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"},
+    "ibm-plex-mono": {"family": "IBM Plex Mono", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"}
+  },
+  "designSystems": []
+}

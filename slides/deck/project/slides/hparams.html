@@ -1,0 +1,15 @@
+<section id="hparams" data-transition="fade" style="background:#FCFCFB;color:#3D4A5C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#C2410C">Results · hyper-parameters (vanilla baseline)</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1;color:#14213D">Learning rate and optimizer matter most</h2>
+</div>
+<img src="/_blob/91351f5b95d9dce279567cee6070e6a5" alt="Four dot plots of macro-F1: learning rate peaks at 1e-3 and 3e-3 (about 64 %) and drops to 49 % at 1e-4 and 54 % at 1e-2; Adam and AdamW beat RMSprop and SGD; initialisations are within one point, Xavier best; batch sizes 32 and 64 slightly beat 128 and 256, while 512 drops to 60 %" style="width:1440px;height:537px;object-fit:contain">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:40px">
+<p style="font-size:24px;line-height:1.35"><b style="color:#14213D">LR:</b> 1e-3 to 3e-3; 3e-3 peaks in half the epochs</p>
+<p style="font-size:24px;line-height:1.35"><b style="color:#14213D">Optimizer:</b> Adam ≈ AdamW &gt; RMSprop ≫ SGD</p>
+<p style="font-size:24px;line-height:1.35"><b style="color:#14213D">Init:</b> Xavier +0.9 F1, close to seed noise</p>
+<p style="font-size:24px;line-height:1.35"><b style="color:#14213D">Batch:</b> 32–64 gain ≈ 1 F1 but cost 2–3× time</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7689">One factor changed at a time from the base (Adam, lr 1e-3, batch 128, default init) · 09</p>
+<aside>We changed one factor at a time on the vanilla baseline. The learning rate is the most sensitive knob: 1e-4 and 3e-4 are far too slow for ten epochs, 1e-2 is unstable, and 1e-3 and 3e-3 tie, with 3e-3 reaching its best score twice as fast. Adaptive optimizers clearly win: Adam and AdamW are equivalent, RMSprop is a bit worse, and SGD with momentum is either too slow or unstable even with gradient clipping. Initialisation changes less than one point: Xavier is best, orthogonal recurrent weights learn faster at the start but end at the same place; these gaps are close to the seed-to-seed noise we measured, about 0.4 points. Smaller batches give more updates per epoch and gain about one point, at two to three times the training time; batch 512 does too few updates in ten epochs. We used these results to build the final model.</aside>
+</section>

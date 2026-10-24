@@ -1,0 +1,12 @@
+bs_64 | device=mps | train=101068 | params={'total': 3125379, 'recurrent': 394240, 'embedding': 2730368, 'head': 771}
+{"epoch": 1, "train_loss": 0.8757, "train_acc": 0.7102, "val_loss": 0.7861, "val_acc": 0.7786, "val_macro_f1": 0.5211, "grad_norm": 1.0224, "epoch_time": 189.1345}
+{"epoch": 2, "train_loss": 0.7329, "train_acc": 0.7741, "val_loss": 0.7084, "val_acc": 0.7883, "val_macro_f1": 0.6035, "grad_norm": 0.8657, "epoch_time": 188.8482}
+{"epoch": 3, "train_loss": 0.6672, "train_acc": 0.7916, "val_loss": 0.684, "val_acc": 0.8045, "val_macro_f1": 0.6117, "grad_norm": 0.8316, "epoch_time": 212.5537}
+{"epoch": 4, "train_loss": 0.6244, "train_acc": 0.8023, "val_loss": 0.6694, "val_acc": 0.8093, "val_macro_f1": 0.6223, "grad_norm": 0.8345, "epoch_time": 205.1743}
+{"epoch": 5, "train_loss": 0.5889, "train_acc": 0.8096, "val_loss": 0.6509, "val_acc": 0.7994, "val_macro_f1": 0.6292, "grad_norm": 0.8596, "epoch_time": 219.2723}
+{"epoch": 6, "train_loss": 0.5585, "train_acc": 0.8196, "val_loss": 0.6598, "val_acc": 0.8038, "val_macro_f1": 0.6456, "grad_norm": 0.8849, "epoch_time": 192.9933}
+{"epoch": 7, "train_loss": 0.5314, "train_acc": 0.8268, "val_loss": 0.6747, "val_acc": 0.8049, "val_macro_f1": 0.6293, "grad_norm": 0.9167, "epoch_time": 199.433}
+{"epoch": 8, "train_loss": 0.507, "train_acc": 0.8335, "val_loss": 0.7131, "val_acc": 0.8069, "val_macro_f1": 0.6368, "grad_norm": 0.9538, "epoch_time": 199.8433}
+{"epoch": 9, "train_loss": 0.4851, "train_acc": 0.8416, "val_loss": 0.6923, "val_acc": 0.812, "val_macro_f1": 0.6471, "grad_norm": 0.9777, "epoch_time": 192.5524}
+{"epoch": 10, "train_loss": 0.4628, "train_acc": 0.8478, "val_loss": 0.6925, "val_acc": 0.8011, "val_macro_f1": 0.6543, "grad_norm": 1.0131, "epoch_time": 161.4727}
+[done] bs_64 best_epoch=10 val_f1=0.6543 test_f1=0.6465 test_acc=0.7924
