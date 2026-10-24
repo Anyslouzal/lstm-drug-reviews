@@ -1,27 +1,27 @@
-<section id="protocol" data-transition="fade" style="background:#FCFCFB;color:#3D4A5C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<section id="protocol" data-transition="fade" style="background:#FFFFFF;color:#3A4350;font-family:'Open Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#C2410C">Modelling approach · protocol</p>
-<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1;color:#14213D">One pipeline, one protocol for every cell</h2>
+<p style="font-size:26px;font-weight:600;color:#1F4E79">Modelling approach · protocol</p>
+<h2 style="font-family:'Montserrat', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.12;color:#1B1F24">One pipeline, one protocol for every cell</h2>
 </div>
 <div style="display:flex;align-items:center;gap:12px">
-<div style="width:280px;background:#EEF1F5;border-radius:16px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#14213D;text-align:center">Review tokens (≤ 200)</p></div>
+<div style="width:280px;background:#F3F5F8;border-radius:8px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#1B1F24;text-align:center">Review tokens (≤ 200)</p></div>
 <x-shape kind="arrow-right" style="background:#9AA5B4;width:40px;height:24px"></x-shape>
-<div style="width:280px;background:#EEF1F5;border-radius:16px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#14213D;text-align:center">Embedding 128-d</p></div>
+<div style="width:280px;background:#F3F5F8;border-radius:8px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#1B1F24;text-align:center">Embedding 128-d</p></div>
 <x-shape kind="arrow-right" style="background:#9AA5B4;width:40px;height:24px"></x-shape>
-<div style="width:280px;background:#14213D;border-radius:16px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#FCFCFB;text-align:center;font-weight:600">LSTM-variant cell, H = 256</p></div>
+<div style="width:280px;background:#14213D;border-radius:8px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#FCFCFB;text-align:center;font-weight:600">LSTM-variant cell, H = 256</p></div>
 <x-shape kind="arrow-right" style="background:#9AA5B4;width:40px;height:24px"></x-shape>
-<div style="width:280px;background:#EEF1F5;border-radius:16px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#14213D;text-align:center">State after last real token</p></div>
+<div style="width:280px;background:#F3F5F8;border-radius:8px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#1B1F24;text-align:center">State after last real token</p></div>
 <x-shape kind="arrow-right" style="background:#9AA5B4;width:40px;height:24px"></x-shape>
-<div style="width:280px;background:#EEF1F5;border-radius:16px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#14213D;text-align:center">Linear + softmax, 3 classes</p></div>
+<div style="width:280px;background:#F3F5F8;border-radius:8px;padding:24px 20px"><p style="font-size:26px;line-height:1.3;color:#1B1F24;text-align:center">Linear + softmax, 3 classes</p></div>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px 48px">
-<div style="display:flex;gap:20px;align-items:start"><x-icon name="Settings" style="color:#C2410C;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">Adam, lr 1e-3, batch 128, gradient clipping at 1</p></div>
-<div style="display:flex;gap:20px;align-items:start"><x-icon name="Chart" style="color:#C2410C;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">Cross-entropy weighted by 1/√(class frequency)</p></div>
-<div style="display:flex;gap:20px;align-items:start"><x-icon name="Clock" style="color:#C2410C;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">≤ 10 epochs, early stopping on validation macro-F1</p></div>
-<div style="display:flex;gap:20px;align-items:start"><x-icon name="Users" style="color:#C2410C;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">Same splits, 3 seeds per cell, test set used once</p></div>
-<div style="display:flex;gap:20px;align-items:start"><x-icon name="CheckCircle" style="color:#C2410C;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">Unit tests: equal to nn.LSTM / nn.LSTM(proj_size) to 1e-6</p></div>
-<div style="display:flex;gap:20px;align-items:start"><x-icon name="Lightning" style="color:#C2410C;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">unbind() unrolling: 5× faster backward pass</p></div>
+<div style="display:flex;gap:20px;align-items:start"><x-icon name="Settings" style="color:#1F4E79;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">Adam, lr 1e-3, batch 128, gradient clipping at 1</p></div>
+<div style="display:flex;gap:20px;align-items:start"><x-icon name="Chart" style="color:#1F4E79;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">Cross-entropy weighted by 1/√(class frequency)</p></div>
+<div style="display:flex;gap:20px;align-items:start"><x-icon name="Clock" style="color:#1F4E79;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">≤ 10 epochs, early stopping on validation macro-F1</p></div>
+<div style="display:flex;gap:20px;align-items:start"><x-icon name="Users" style="color:#1F4E79;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">Same splits, 3 seeds per cell, test set used once</p></div>
+<div style="display:flex;gap:20px;align-items:start"><x-icon name="CheckCircle" style="color:#1F4E79;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">Unit tests: equal to nn.LSTM / nn.LSTM(proj_size) to 1e-6</p></div>
+<div style="display:flex;gap:20px;align-items:start"><x-icon name="Lightning" style="color:#1F4E79;width:44px;height:44px"></x-icon><p style="font-size:28px;line-height:1.35">unbind() unrolling: 5× faster backward pass</p></div>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7689">Trained on an Apple M4 GPU (PyTorch MPS) · every run logged as JSON · 06</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#7A828C">Trained on an Apple M4 GPU (PyTorch MPS) · every run logged as JSON · 06</p>
 <aside>Every model goes through the same pipeline; only the cell changes. We classify from the state after the last real token, not from pooling, so the decision depends on what the cell remembers. The protocol is identical for every model: same splits, same loss, same optimiser, early stopping on validation macro-F1, and each architecture is trained with three seeds so we can report a mean and a standard deviation. To be sure our cells are correct, we unit-tested them against PyTorch’s own LSTM, used only as a reference. One engineering note: slicing x[:, t] inside the loop made the backward pass quadratic in length; using unbind made training five times faster.</aside>
 </section>

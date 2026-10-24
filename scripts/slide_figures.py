@@ -46,7 +46,7 @@ def confusion(df):
     for i in range(3):
         for j in range(3):
             ax.text(j, i, f"{cmn[i, j]:.0%}\n({int(cm[i, j]):,})", ha="center", va="center", fontsize=14,
-                    color="#fcfcfb" if cmn[i, j] > 0.55 else "#0b0b0b")
+                    color="#ffffff" if cmn[i, j] > 0.55 else "#0b0b0b")
     ax.set_xticks(range(3), names)
     ax.set_yticks(range(3), names)
     ax.set_xlabel("Predicted")

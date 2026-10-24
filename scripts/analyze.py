@@ -80,7 +80,7 @@ def budget_figure(t, lp, path, figsize, fs):
         ax.set_title("(a) Same budget, different cells")
         ax.grid(axis="y", visible=False)
         lp = lp.sort_values("proj")
-        bx.plot(lp.proj, lp.val_f1 * 100, color="#f5c55b", marker="o", markersize=fs * 0.55, markerfacecolor="#fcfcfb",
+        bx.plot(lp.proj, lp.val_f1 * 100, color="#f5c55b", marker="o", markersize=fs * 0.55, markerfacecolor="#ffffff",
                 markeredgewidth=2, label="validation")
         bx.plot(lp.proj, lp.test_f1 * 100, color=CELL_COLORS["lstmp"], marker="o", markersize=fs * 0.55, label="test")
         bx.set_xscale("log", base=2)
@@ -103,7 +103,7 @@ def hparam_figure(panels, path, figsize, fs):
             x = np.arange(len(d))
             ordered = key in ("lr", "batch")
             ls = "-" if ordered else ""
-            ax.plot(x, d.val_f1 * 100, linestyle=ls, color="#86b6ef", marker="o", markersize=fs * 0.75, markerfacecolor="#fcfcfb",
+            ax.plot(x, d.val_f1 * 100, linestyle=ls, color="#86b6ef", marker="o", markersize=fs * 0.75, markerfacecolor="#ffffff",
                     markeredgewidth=2, label="validation")
             ax.plot(x, d.test_f1 * 100, linestyle=ls, color="#2a78d6", marker="o", markersize=fs * 0.75, label="test")
             ax.set_xticks(x, d.label)
@@ -251,7 +251,7 @@ def main():
         for i in range(3):
             for j in range(3):
                 ax.text(j, i, f"{cmn[i, j]:.0%}\n({int(cm[i, j]):,})", ha="center", va="center", fontsize=8,
-                        color="#fcfcfb" if cmn[i, j] > 0.55 else INK)
+                        color="#ffffff" if cmn[i, j] > 0.55 else INK)
         ax.set_xticks(range(3), CLASS_NAMES)
         ax.set_yticks(range(3), CLASS_NAMES)
         ax.set_xlabel("Predicted")

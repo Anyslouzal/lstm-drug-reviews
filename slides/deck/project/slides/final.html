@@ -1,29 +1,29 @@
-<section id="final" data-transition="fade" style="background:#FCFCFB;color:#3D4A5C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<section id="final" data-transition="fade" style="background:#FFFFFF;color:#3A4350;font-family:'Open Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#C2410C">Final model · performance and evaluation</p>
-<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1;color:#14213D">A bidirectional CIFG reaches 65.6 % macro-F1</h2>
+<p style="font-size:26px;font-weight:600;color:#1F4E79">Final model · performance and evaluation</p>
+<h2 style="font-family:'Montserrat', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.12;color:#1B1F24">A bidirectional CIFG reaches 65.6 % macro-F1</h2>
 </div>
 <div style="display:flex;gap:72px;align-items:start;flex:1">
-<img src="/_blob/833826f0a996bf15a08e57df5bd461df" alt="Row-normalised test confusion matrix: negative 75 % correct, 15 % predicted neutral, 11 % positive; neutral 36 % correct, 26 % predicted negative, 38 % positive; positive 88 % correct, 7 % neutral, 5 % negative" style="width:658px;height:620px;object-fit:contain">
+<img src="/_blob/a2a65fc16405e7f8eb02fed1a042f277" alt="Row-normalised test confusion matrix: negative 75 % correct, 15 % predicted neutral, 11 % positive; neutral 36 % correct, 26 % predicted negative, 38 % positive; positive 88 % correct, 7 % neutral, 5 % negative" style="width:658px;height:620px;object-fit:contain">
 <div style="flex:1;display:flex;flex-direction:column;gap:36px">
 <div style="display:flex;gap:56px">
 <div style="display:flex;flex-direction:column;gap:4px">
-<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1;color:#C2410C">65.6 %</p>
+<p style="font-family:'Montserrat', Arial, sans-serif;font-size:96px;font-weight:600;line-height:1;color:#1F4E79">65.6 %</p>
 <p style="font-size:26px;line-height:1.35">test macro-F1 · +1.6 vs vanilla</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:4px">
-<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1;color:#14213D">80.3 %</p>
+<p style="font-family:'Montserrat', Arial, sans-serif;font-size:96px;font-weight:600;line-height:1;color:#1B1F24">80.3 %</p>
 <p style="font-size:26px;line-height:1.35">test accuracy</p>
 </div>
 </div>
-<table style="font-size:26px;color:#14213D">
+<table style="font-size:26px;color:#1B1F24">
 <tr><th style="width:34%">Candidate</th><th style="width:22%;text-align:right">Rec. params</th><th style="width:22%;text-align:right">Val F1</th><th style="width:22%;text-align:right">Test F1</th></tr>
 <tr><td>1 layer, both directions</td><td style="text-align:right">591k</td><td style="text-align:right">65.6</td><td style="text-align:right">65.1</td></tr>
-<tr style="background:#E4ECF7"><td><b>2 layers, both directions</b></td><td style="text-align:right"><b>1.77M</b></td><td style="text-align:right"><b>66.7</b></td><td style="text-align:right"><b>65.6</b></td></tr>
+<tr style="background:#E8EFF7"><td><b>2 layers, both directions</b></td><td style="text-align:right"><b>1.77M</b></td><td style="text-align:right"><b>66.7</b></td><td style="text-align:right"><b>65.6</b></td></tr>
 </table>
-<p style="font-size:26px;line-height:1.4">F1 per class: <b style="color:#14213D">negative 76</b> · <b style="color:#14213D">neutral 31</b> · <b style="color:#14213D">positive 89</b>. Neutral reviews are confused in both directions.</p>
+<p style="font-size:26px;line-height:1.4">F1 per class: <b style="color:#1B1F24">negative 76</b> · <b style="color:#1B1F24">neutral 31</b> · <b style="color:#1B1F24">positive 89</b>. Neutral reviews are confused in both directions.</p>
 </div>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7689">CIFG, H = 256 per direction, Xavier init, Adam lr 2e-3, batch 128 · chosen on validation, test evaluated once · 10</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#7A828C">CIFG, H = 256 per direction, Xavier init, Adam lr 2e-3, batch 128 · chosen on validation, test evaluated once · 10</p>
 <aside>For the final model we combined what we learned: the CIFG cell, Xavier initialisation, a learning rate of 2e-3, and we let the model read the review in both directions. We trained two candidates, one and two layers, and chose on validation only: the two-layer model wins, and we evaluated it once on the test set. It reaches 65.6 % macro-F1 and 80.3 % accuracy, 1.6 points above the vanilla baseline. It also converges very fast: its best validation score is at epoch 4. The confusion matrix shows where the errors are: positive and negative reviews are mostly right, but only 36 % of neutral reviews are recognised; the rest are split between negative and positive, and some clearly polar reviews are pulled to neutral by the class weights.</aside>
 </section>

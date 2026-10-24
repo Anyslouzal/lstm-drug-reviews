@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-INK, INK2, MUTED, GRID, AXIS, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7", "#fcfcfb"
+INK, INK2, MUTED, GRID, AXIS, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7", "#ffffff"
 # one fixed colour per architecture (categorical slots, never re-ordered)
 CELL_COLORS = {"vanilla": "#2a78d6", "wmc": "#eb6834", "cifg": "#1baf7a", "lstmp": "#eda100"}
 CELL_NAMES = {"vanilla": "Vanilla LSTM", "wmc": "WMC-LSTM", "cifg": "CIFG-LSTM", "lstmp": "LSTMP"}

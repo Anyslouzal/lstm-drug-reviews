@@ -91,7 +91,7 @@ print(json.dumps(stats, indent=1))
 fig, ax = plt.subplots(figsize=(5.2, 3.0))
 rc = train["rating"].value_counts().sort_index()
 colors = [CLASS_COLORS[rating_to_label(r)] for r in rc.index]
-ax.bar(rc.index, rc.values / 1000, color=colors, width=0.8, edgecolor="#fcfcfb", linewidth=1)
+ax.bar(rc.index, rc.values / 1000, color=colors, width=0.8, edgecolor="#ffffff", linewidth=1)
 ax.set_xticks(range(1, 11))
 ax.set_xlabel("Rating (1-10)")
 ax.set_ylabel("Reviews (thousands)")
@@ -125,7 +125,7 @@ rows = [("Official train", s["raw_train"], s["dedup_train"]),
 for y, (name, raw, kept) in enumerate(rows):
     ax.barh(y, raw / 1000, color="#e1e0d9", height=0.55)
     ax.barh(y, kept / 1000, color="#2a78d6", height=0.55)
-    ax.text(kept / 1000 + 2, y, f"{kept:,} kept", va="center", color="#fcfcfb" if False else INK2, fontsize=9)
+    ax.text(kept / 1000 + 2, y, f"{kept:,} kept", va="center", color="#ffffff" if False else INK2, fontsize=9)
     ax.text(raw / 1000 + 2, y, f"{raw:,}", va="center", color=MUTED, fontsize=9)
 ax.set_yticks([0, 1], [r[0] for r in rows])
 ax.invert_yaxis()
